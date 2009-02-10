@@ -69,9 +69,16 @@ Note that when printing through printkit_pdf, printkit_djvu it is possible to ad
 
 One can also use 
 {{{
-sh ./install.sh 
+sh ./install.sh <list of devices>
 }}}
-as root for automatic installation. The script installs all scripts, the backend, and sets djvu, pdf, and ps virtual printers in CUPS with `CUPS-PDF.ppd`.
+as root for automatic installation. The script installs scripts, the backend, and sets djvu, pdf, and ps virtual printers in CUPS with `CUPS-PDF.ppd`.
+
+The list of devices can include `djvu`, `pdf`, `ps` - then the corresponding virtual printers are installed. If it is not `djvu`, `pdf`, `ps`, then the parameter is treated as a printer name and the script adds `gtklp` interface with this printer being the default destination for `gtklp`
+
+Example (installing `djvu` and `pdf` virtual printers and `gtklp` as CUPS backends; `gtklp` default destination is {{{Xerox_3250}}} - assuming that this printer has been installed in CUPS, see `lpstat -a`):
+{{{ 
+sh ./install.sh djvu pdf Xerox_3250
+}}}
 
 == Running the daemon: ==
 
