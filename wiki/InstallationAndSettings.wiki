@@ -1,0 +1,31 @@
+#summary Notes on installation of the set of virtual printers through a CUPS backend.
+
+= Introduction =
+
+For providing CUPS _ps-vprinter_ backend one has to add as root the script _ps-vprinter_ to /usr/lib/cups/backend directory and change permissions:
+chmod 755 /usr/lib/cups/backend/ps-vprinter
+(on some systems it should be chmod 1755 …, see stat --format=%a /usr/lib/cups/backend/scsi)
+
+Besides, add the script _virtprintd_ to some directory in the PATH, for example to /usr/local/bin and chmod +x /usr/local/bin/virtprintd
+
+If you are going to use virtual printers to print (save) to djvu, pdf or ps files, then add the scripts printkit_djvu, printkit_pdf, printkit_ps to some directory in the PATH, for example to /usr/local/bin and
+chmod +x printkit_djvu
+chmod +x printkit_pdf
+chmod +x printkit_ps
+
+It is highly recommended to install the program gtklp. Being installed as CUPS backend through the virtual printer, it gives a uniform approach to your printer from all applications.  
+
+For creation of output file _ps-vprinter_ needs a general postscript PPD file (it is better if it supports colour output). The standard /usr/share/cups/model/Postscript-level2.ppd can be used if it exists. If no, or for better result it can be useful to add to /usr/share/cups/model the PPD file from _cups-pdf_ (further CUPS-PDF.ppd) or the free AdobeTM Distiller ppd file from
+http://download.adobe.com/pub/adobe/printerdrivers/win/all/ppdfiles/adobe.zip
+
+= Settings =
+
+
+
+
+= Details =
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
