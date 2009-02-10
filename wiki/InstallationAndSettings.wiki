@@ -3,7 +3,9 @@
 = Introduction =
 
 For providing CUPS _ps-vprinter_ backend one has to add as root the script _ps-vprinter_ to /usr/lib/cups/backend directory and change permissions:
+
 chmod 755 /usr/lib/cups/backend/ps-vprinter
+
 (on some systems it should be chmod 1755 …, see stat --format=%a /usr/lib/cups/backend/scsi)
 
 Besides, add the script _virtprintd_ to some directory in the PATH, for example to /usr/local/bin and chmod +x /usr/local/bin/virtprintd
