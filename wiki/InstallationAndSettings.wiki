@@ -47,7 +47,7 @@ lpadmin -p Save_as_DJVU -v ps-vprinter:/djvu -E
 
 To add gtklp as the CUPS printer using CUPS-PDF.ppd do as root 
 
-lpadmin -p <NameOfYourPrinter>_via_gtklp -v "ps-vprinter:/printer-><NameOfYourPrinter>" 
+lpadmin -p \<NameOfYourPrinter>_via_gtklp -v "ps-vprinter:/printer-><NameOfYourPrinter>" 
 -E -P /usr/share/cups/model/CUPS-PDF.ppd 
 -D "Print to <NameOfYourPrinter> via gtklp" 
 -L "Print to printer <NameOfYourPrinter> via gtklp"
@@ -59,7 +59,7 @@ Save_as_DJVU,  Save_as_PDF,  Save_as_PS, <NameOfYourPrinter>_via_gtklp
 
 Note that when printing through printkit_pdf, printkit_djvu it is possible to add files to existing ones.
 
-Alternative way of installation:
+== Alternative way of installation: ==
 
 One can also use 
 
@@ -67,7 +67,7 @@ sh ./install.sh
 
 as root for automatic installation. The script installs all scripts, the backend, and sets djvu, pdf, and ps virtual printers in CUPS with CUPS-PDF.ppd.
 
-Running the daemon:
+== Running the daemon: ==
 
 Interaction with user is organized through the daemon script _virtprintd_ which should be run with the rights of user.
 
