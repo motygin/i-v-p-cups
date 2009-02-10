@@ -23,10 +23,57 @@ It is highly recommended to install the program gtklp. Being installed as CUPS b
 For creation of output file _ps-vprinter_ needs a general postscript PPD file (it is better if it supports colour output). The standard /usr/share/cups/model/Postscript-level2.ppd can be used if it exists. If no, or for better result it can be useful to add to /usr/share/cups/model the PPD file from _cups-pdf_ (further CUPS-PDF.ppd) or the free AdobeTM Distiller ppd file from
 http://download.adobe.com/pub/adobe/printerdrivers/win/all/ppdfiles/adobe.zip
 
-= Settings =
+= Setting the CUPS printers =
 
+It can be done through the Web interface _http://localhost:631/admin_ or a command-line program called _lpadmin_:
 
+To add the CUPS PDF virtual printer using CUPS-PDF.ppd do as root 
 
+lpadmin -p Save_as_PDF -v ps-vprinter:/pdf -E
+-P /usr/share/cups/model/CUPS-PDF.ppd -D "Print to a PDF file"
+-L "Interactive PDF Backend via /usr/lib/cups/backend/ps-vprinter"
+
+To add the CUPS PS virtual printer using CUPS-PDF.ppd do as root
+ 
+lpadmin -p Save_as_PS -v ps-vprinter:/ps -E
+-P /usr/share/cups/model/CUPS-PDF.ppd -D "Print to a PS file"
+-L "Interactive PS Backend via /usr/lib/cups/backend/ps-vprinter"
+
+To add the CUPS DJVU virtual printer using CUPS-PDF.ppd do as root
+
+lpadmin -p Save_as_DJVU -v ps-vprinter:/djvu -E
+-P /usr/share/cups/model/CUPS-PDF.ppd -D "Print to a DJVU file"
+-L "Interactive DJVU Backend via /usr/lib/cups/backend/ps-vprinter"
+
+To add gtklp as the CUPS printer using CUPS-PDF.ppd do as root 
+
+lpadmin -p <NameOfYourPrinter>_via_gtklp -v "ps-vprinter:/printer-><NameOfYourPrinter>" 
+-E -P /usr/share/cups/model/CUPS-PDF.ppd 
+-D "Print to <NameOfYourPrinter> via gtklp" 
+-L "Print to printer <NameOfYourPrinter> via gtklp"
+
+Here <NameOfYourPrinter> is the name of your printer device (e.g. Xerox_3250) in CUPS (see _lpstat -a_)
+
+Now in any print dialog we should have printers
+Save_as_DJVU,  Save_as_PDF,  Save_as_PS, <NameOfYourPrinter>_via_gtklp
+
+Note that when printing through printkit_pdf, printkit_djvu it is possible to add files to existing ones.
+
+Alternative way of installation:
+
+One can also use 
+
+sh ./install.sh 
+
+as root for automatic installation. The script installs all scripts, the backend, and sets djvu, pdf, and ps virtual printers in CUPS with CUPS-PDF.ppd.
+
+Running the daemon:
+
+Interaction with user is organized through the daemon script _virtprintd_ which should be run with the rights of user.
+
+A simple way to invoke the daemon is to add "/usr/local/bin/virtprintd start &" to autostart of your DE (kde, xfce,...)
+
+To stop the daemon use the command virtprintd stop
 
 = Details =
 
