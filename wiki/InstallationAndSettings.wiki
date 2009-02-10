@@ -9,9 +9,12 @@ chmod 755 /usr/lib/cups/backend/ps-vprinter
 Besides, add the script _virtprintd_ to some directory in the PATH, for example to /usr/local/bin and chmod +x /usr/local/bin/virtprintd
 
 If you are going to use virtual printers to print (save) to djvu, pdf or ps files, then add the scripts printkit_djvu, printkit_pdf, printkit_ps to some directory in the PATH, for example to /usr/local/bin and
-* chmod +x printkit_djvu
-* chmod +x printkit_pdf
-* chmod +x printkit_ps
+
+chmod +x printkit_djvu
+
+chmod +x printkit_pdf
+
+chmod +x printkit_ps
 
 It is highly recommended to install the program gtklp. Being installed as CUPS backend through the virtual printer, it gives a uniform approach to your printer from all applications.  
 
