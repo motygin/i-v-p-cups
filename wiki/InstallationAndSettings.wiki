@@ -77,7 +77,11 @@ To stop the daemon use the command virtprintd stop
 
 = Details =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+Semaphore files which are used for inter-process interaction are kept in tmpfs (filesystem in RAM); it is assumed that /dev/shm is assigned as tmpfs.
+
+= Algorithm =
+The daemon _virtprintd_ waits till cups backend _ps-vprinter_ creates the directory /dev/shm/$USER-virtprint. Then it takes name of a PS file prepared by the cups backend from the file ps-done or pdf-done or djvu-done or printer-done and process the ps file to corresponding print tool: printkit_ps, _pdf, _djvu, or to gtklp
+
+In latter case copies contains the number of copies, printer contains the name of printer for gtklp dialogue.
+
+/tmp/$USER-ps-files is the place where the temporary postscript file is kept
