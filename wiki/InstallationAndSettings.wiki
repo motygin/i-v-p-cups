@@ -52,7 +52,7 @@ lpadmin -p Save_as_DJVU -v ps-vprinter:/djvu -E \
 
 To add `gtklp` as the CUPS printer using `CUPS-PDF.ppd` do as root 
 {{{
-lpadmin -p \<NameOfYourPrinter>_via_gtklp -v "ps-vprinter:/printer-><NameOfYourPrinter>" \
+lpadmin -p <NameOfYourPrinter>_via_gtklp -v "ps-vprinter:/printer-><NameOfYourPrinter>" \
 -E -P /usr/share/cups/model/CUPS-PDF.ppd \
 -D "Print to <NameOfYourPrinter> via gtklp" \
 -L "Print to printer <NameOfYourPrinter> via gtklp"
@@ -61,7 +61,7 @@ lpadmin -p \<NameOfYourPrinter>_via_gtklp -v "ps-vprinter:/printer-><NameOfYourP
 Here {{{<NameOfYourPrinter>}}} is the name of your printer device (e.g. Xerox_3250) in CUPS (see `lpstat -a`)
 
 Now in any print dialog we should have printers
-Save_as_DJVU,  Save_as_PDF,  Save_as_PS, {{{<NameOfYourPrinter>}}}_via_gtklp
+{{{Save_as_DJVU}}}, {{{Save_as_PDF}}}, {{{Save_as_PS}}}, {{{<NameOfYourPrinter>_via_gtklp}}}
 
 Note that when printing through printkit_pdf, printkit_djvu it is possible to add files to existing ones.
 
