@@ -1,6 +1,6 @@
 #summary Notes on installation of the set of virtual printers through a CUPS backend.
 
-= Introduction =
+= Installation =
 
 For providing CUPS _ps-vprinter_ backend one has to add as root the script `ps-vprinter` to `/usr/lib/cups/backend` directory and change permissions:
 {{{
@@ -89,9 +89,7 @@ A simple way to invoke the daemon is to add `/usr/local/bin/virtprintd start &` 
 To stop the daemon use the command `virtprintd stop`
 
 = Algorithm =
-The daemon _virtprintd_ waits till cups backend _ps-vprinter_ creates the directory `/dev/shm/$USER-virtprint`. Then it takes name of a PS file prepared by the cups backend from the file `ps-done` or `pdf-done` or `djvu-done` or `printer-done` and process the ps file to corresponding print tool: `printkit_ps`, `printkit_pdf`, `printkit_djvu`, or to `gtklp`
-
-In latter case the file `copies` contains the number of copies, the file `printer` contains the name of printer for gtklp dialogue.
+The daemon _virtprintd_ waits till cups backend _ps-vprinter_ creates the directory `/dev/shm/$USER-virtprint`. Then it takes name of a PS file prepared by the cups backend from the file `ps-done` or `pdf-done` or `djvu-done` or `printer-done` and process the ps file to corresponding print tool: `printkit_ps`, `printkit_pdf`, `printkit_djvu`, or to `gtklp`. (In latter case the file `copies` contains the number of copies, the file `printer` contains the name of printer for gtklp dialogue.)
 
 = Details =
 
@@ -99,4 +97,4 @@ The project language is Bash shell scripts. Needed software: `zenity`; `netpbm` 
 
 Semaphore files which are used for inter-process interaction are kept in `tmpfs` (filesystem in RAM); it is assumed that `/dev/shm` is assigned as `tmpfs`.
 
-`/tmp/$USER-ps-files` is the place where the temporary postscript file is kept
+`/tmp/$USER-ps-files` is the place where the temporary postscript file is kept.
