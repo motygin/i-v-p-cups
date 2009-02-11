@@ -90,6 +90,8 @@ To stop the daemon use the command `virtprintd stop`
 
 = Details =
 
+The project language is Bash shell scripts. Needed software: `zenity`; `netpbm` (>=10.21), `psutils`, and `djvulibre` for djvu pseudo-printer; `pdftk` for pdf pseudo-printer.
+
 Semaphore files which are used for inter-process interaction are kept in `tmpfs` (filesystem in RAM); it is assumed that `/dev/shm` is assigned as `tmpfs`.
 
 = Algorithm =
