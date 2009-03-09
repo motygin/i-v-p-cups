@@ -84,7 +84,7 @@ sh ./install.sh djvu pdf Xerox_3250
 
 Interaction with user is organized through the daemon script `virtprintd` which should be run with the rights of user.
 
-A simple way to invoke the daemon is to add `/usr/local/bin/virtprintd start &` to autostart of your DE (kde, xfce,...)
+A simple way to invoke the daemon is to add `virtprintd start &` to autostart of your DE (kde, xfce,...)
 
 To stop the daemon use the command `virtprintd stop`
 
