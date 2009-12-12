@@ -2,10 +2,10 @@
 
 = Installation =
 
-* Check if you have the following packages installed:
+  * Check if you have the following packages installed:
 `zenity`, `gtklp`, `netpbm` (>=10.21), `psutils`, `djvulibre`, `pdftk`.
 
-* Run as root 
+  * Run as root 
 {{{
 sh ./install.sh <list of devices>
 }}}
@@ -23,7 +23,7 @@ sh ./install.sh djvu pdf Xerox_3250
 Now any print dialog should have printers
 {{{Save_as_DJVU}}}, {{{Save_as_PDF}}}, {{{Xerox_3250_via_gtklp}}}
 
-* For functioning of the backends the daemon script `virtprintd` should be running
+  * For functioning of the backends the daemon script `virtprintd` should be running
 (with the rights of user!). (More details on algorithm are given below.)
 
 A simple way to have the daemon running is to add
