@@ -3,7 +3,7 @@
 = Installation =
 
 Check if you have the following packages installed:
-`zenity`, `gtklp`, `netpbm` (>=10.21), `psutils`, and `djvulibre` for djvu pseudo-printer; `pdftk` for pdf pseudo-printer.
+`zenity`, `gtklp`, `netpbm` (>=10.21), `psutils`, `djvulibre`, `pdftk`.
 
 Run as root 
 {{{
