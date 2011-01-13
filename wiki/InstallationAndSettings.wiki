@@ -17,7 +17,7 @@ with this printer being the default destination for `gtklp`
 Example (installing `djvu` and `pdf` virtual printers and `gtklp` as CUPS backends; `gtklp` default destination is {{{Xerox_3250}}} - 
 assuming that this printer has been installed in CUPS):
 {{{ 
-sh ./install.sh djvu pdf Xerox_3250
+bash ./install.sh djvu pdf Xerox_3250
 }}}
 
 Now any print dialog should have printers
