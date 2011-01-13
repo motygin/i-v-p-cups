@@ -7,7 +7,7 @@
 
 *2)* Run as root 
 {{{
-sh ./install.sh <list of devices>
+bash ./install.sh <list of devices>
 }}}
 The list of devices can include `djvu`, `pdf`, `ps` (to install the corresponding virtual printers). 
 If it is not `djvu`, `pdf`, `ps`, then the parameter is treated as a printer name (see lpstat -a) and the script adds `gtklp` interface 
