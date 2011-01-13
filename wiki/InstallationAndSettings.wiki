@@ -42,7 +42,11 @@ For providing CUPS _ps-vprinter_ backend one has to add as root the script `ps-v
 {{{
 chmod 755 /usr/lib/cups/backend/ps-vprinter
 }}}
-(on some systems it should be `chmod 1755 …`, see `stat --format=%a /usr/lib/cups/backend/scsi`)
+or
+{{{
+chmod 700 /usr/lib/cups/backend/ps-vprinter
+}}}
+(on some systems it should be `chmod 1755 …` (or `chmod 1700 …`), see also `stat --format=%a /usr/lib/cups/backend/lpd`)
 
 Besides, add the script `virtprintd` to some directory in the `PATH`, for example to `/usr/local/bin` and 
 {{{
