@@ -1,0 +1,91 @@
+#!/bin/bash
+#################################################################################
+#
+# File: ps-vprinter
+#
+# ver 0.2.7 13/01/2011
+#
+# Description: A PS Writer for CUPS for (interactive) postprocessing of the file 
+#
+# usage: ps-vprinter:/<dest>
+# where <dest> is destination for postprocessing: printer, ps, pdf or djvu
+#
+# for `printer' the default printer can be indicated
+# e.g. ps-vprinter:/printer->Xerox_3250
+#
+# Creates a temporary output ps-file and a file <dev>-done in $VIRTDIR that contains the path to this ps-file
+#
+# Copyright: (c) 2009 Oleg V. Motygin o dot v dot motygin at gmail dot com
+# License:  GPL
+#
+#################################################################################
+
+# Check number of command line arguments
+#
+if [ $# -lt 5 ]; then
+  echo "Usage: $0 job-id user title copies options [file]"
+  exit 1
+fi
+
+PRTUSER=$2
+
+# post processing: interaction with a daemon that deals with the output ps file 
+# through the directory (tmpfs: not to bother hard disk too much)
+VIRTDIR="/dev/shm/$PRTUSER-virtprint"
+#$VIRTDIR/$SEMFILE contains name of ps file
+COPIES="copies"
+PRINTER="printer"
+
+# temporary ps file
+PSDIR="/tmp/$PRTUSER-virtprint"
+FILENAME="$PSDIR/prt-$PRTUSER-$$-`date +%d.%m.%y-%H:%M`.ps"
+
+if [ ! -d "$PSDIR" ]; then
+  mkdir "$PSDIR"
+fi
+
+chmod 777 "$PSDIR"
+
+# get from device URI destination for postprocessing:
+# possible: printer, ps, pdf, djvu 
+VDEV=${DEVICE_URI#ps-vprinter:/}
+PRINTDEV=${VDEV/printer->/}
+VDEV=${VDEV/->*/}
+SEMFILE="$VDEV-done"
+
+# cups-backend must get 5 or 6 parameters: job-id user title copies options [file]
+# copy ps to dest
+if [ $# -eq 5 ]; then
+ cat - > $FILENAME
+else
+ cp "$6" $FILENAME
+fi
+
+if [ "$PRTUSER" != "" ]; then
+  chown $PRTUSER $FILENAME
+fi
+chmod 666 $FILENAME
+
+if [ ! -d "$VIRTDIR" ]; then
+  mkdir "$VIRTDIR"
+fi
+
+chmod 777 "$VIRTDIR"
+
+rm -f "$VIRTDIR/$SEMFILE"
+
+# preparing information for postprocessing
+echo $FILENAME > "$VIRTDIR/$SEMFILE"
+chmod 666 "$VIRTDIR/$SEMFILE"
+
+echo $4 > "$VIRTDIR/$COPIES"
+chmod 666 "$VIRTDIR/$COPIES"
+
+echo "$PRINTDEV" > "$VIRTDIR/$PRINTER"
+chmod 666 "$VIRTDIR/$PRINTER"
+
+wait
+
+exit 0
+##########################  CUPS ps-vprinter ends here  #########################
+
