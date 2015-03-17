@@ -1,0 +1,159 @@
+#!/bin/bash
+#
+# File : printkit_djvu
+# Version: 0.2.2 (11/02/09)
+# Function: interactive djvu print filter
+#
+# When printing through printkit_djvu it is possible to save output as a djvu file
+# the script asks user for file name for saving. When choosing an existing file for
+# saving, it is possible to add converted material to the file
+#
+# Usage: printkit_djvu <name of postscript file>
+# or 
+# printkit_djvu
+# (then it takes the postscript file from stdin
+#
+# Used packages: zenity; netpbm (>=10.21), psutils, and djvulibre
+#
+# Copyright (C) 2009 Oleg Motygin <o dot v dot motygin at gmail dot com>
+#
+
+# type of notification dialogs
+msgboxtype="notification"
+#msgboxtype="info"
+
+# height of list windows
+height=220
+
+if [[ -z $( type -p zenity ) ]]; then echo -e "Zenity -- NOT INSTALLED !";exit 2 ;fi
+if [[ -z $( type -p pstopnm ) ]]; then zenity --info --text "Netpbm -- NOT INSTALLED !"; rm -f "$nmf".ps; rmdir $workdir; exit 3 ;fi
+if [[ -z $( type -p cpaldjvu ) ]]; then zenity --info --text "DjvuLibre -- NOT INSTALLED !"; rm -f "$nmf".ps; rmdir $workdir; exit 4 ;fi
+if [[ -z $( type -p psselect ) ]]; then zenity --info --text "Psutils -- NOT INSTALLED !"; rm -f "$nmf".ps; rmdir $workdir; exit 5 ;fi
+
+workdir="/tmp/temp_printkit_`date +%d%H%M%S`"
+mkdir $workdir >& /dev/null
+nmf="$workdir/page"
+
+if [ $# -lt 1 ]; then
+ cat /dev/stdin > $nmf.ps
+else
+ if [ -f "$1" ]; then
+  cat $1 > $nmf.ps
+ else
+  cat /dev/stdin > $nmf.ps
+ fi
+fi
+
+nmbpgs=`cat "$nmf".ps | sed -n 's/%%Page:\s*\([0-9]\+\)[^0-9]*.*/\1/1p' | sed -n '$='`
+
+if [ "$nmbpgs" = "" ]; then
+ nmbpgs=1
+ nmbpgs=`cat "$nmf".ps | sed -n 's/%%Pages:\s*\([0-9]\+\)[^0-9]*.*/\1/1p' | sed 1q`
+ if [ $nmbpgs -eq 0 ]; then
+  zenity --info --text "Bad input file" >& /dev/null
+  rm -f "$nmf".ps >& /dev/null
+  rmdir $workdir >& /dev/null
+  exit 9
+ fi
+fi
+
+res=`zenity --title "Choose resolution for djvu file" --text "" \
+ --list --column "--- dpi ---" 100 120 140 160 180 200 220 240 \
+260 280 300 320 340 360 380 400 420 440 460 480 500 550 600 800 1200` >& /dev/null
+
+exitcode=$?
+ if [ $exitcode -ne 0 -o "$res" = "" ]; then
+  rm -f "$nmf".ps >& /dev/null
+  rmdir $workdir >& /dev/null
+  zenity --$msgboxtype --text "Interrupted by user" >& /dev/null &
+  pid=$!
+  sleep 3
+  kill -9 $pid >& /dev/null
+  exit 127
+fi
+
+i=1
+pagelist=""
+until [ $i -gt $nmbpgs ]
+do
+ zenity --$msgboxtype --text "Conversion to DJVU goes on. Page $i of $nmbpgs" >& /dev/null &
+ pid=$!
+ psselect -p$i "$nmf".ps "$nmf"-$i.ps >& /dev/null
+ pstopnm -stdout -dpi=$res -yborder=0 -xborder=0 "$nmf"-$i.ps 2> /dev/null | cpaldjvu -dpi $res - "$nmf"-$i.djvu >& /dev/null
+ exitcode=$?
+ rm -f "$nmf"-$i.ps >& /dev/null
+ kill -9 $pid >& /dev/null
+ if [ $exitcode -ne 0 ]; then
+  zenity --info --text "Conversion to DJVU failed" >& /dev/null
+  rm -f $pagelist >& /dev/null
+  rm -f "$nmf".ps >& /dev/null
+  rmdir $workdir >& /dev/null
+  exit 10
+ fi
+ pagelist="$pagelist "$nmf"-$i.djvu"
+ i=`expr $i + 1`
+done
+
+cont=1
+while [ $cont -eq 1 ]
+do
+ cont=0
+ fnm=`zenity --title="Save DJVU file as" --file-selection --save` >& /dev/null
+ exitcode=$?
+ if [ $exitcode -ne 0 -o "$fnm" = "" ]; then
+  rm -f $pagelist >& /dev/null
+  rm -f "$nmf".ps >& /dev/null
+  rmdir $workdir >& /dev/null
+  zenity --$msgboxtype --text "Interrupted by user" >& /dev/null &
+  pid=$!
+  sleep 3
+  kill -9 $pid >& /dev/null
+  exit 127
+ fi
+ if [ -f "$fnm" ]; then
+  ch=`zenity --height $height --title "warning" --text "The file already exists." \
+  --list --column "--- How to proceed ? ---" "Insert at the beginning" \
+   "Append to the end" "Overwrite" "Change name"`
+   exitcode=$?
+   if [ $exitcode -ne 0 -o "$ch" = "" ]; then
+    rm -f $pagelist >& /dev/null
+    rm -f "$nmf".ps >& /dev/null
+    rmdir $workdir >& /dev/null
+    zenity --$msgboxtype --text "Interrupted by user" >& /dev/null &
+    pid=$!
+    sleep 3
+    kill -9 $pid >& /dev/null
+    exit 127
+   fi
+   if [ "$ch" = "Change name" ]; then
+    cont=1
+   fi
+ fi
+done
+
+fnmt="$nmf.djvu"
+case $ch in
+"Insert at the beginning") djvm -c $fnmt $pagelist >& /dev/null
+djvm -i "$fnm" $fnmt 1 >& /dev/null
+rm -f $fnmt >& /dev/null
+;;
+"Append to the end") djvm -c $fnmt $pagelist >& /dev/null
+djvm -i "$fnm" $fnmt >& /dev/null
+rm -f $fnmt >& /dev/null
+;;
+*)  djvm -c "$fnm" $pagelist >& /dev/null
+;;
+esac
+
+rm -f $pagelist >& /dev/null
+rm -f "$nmf".ps >& /dev/null
+
+zenity --$msgboxtype --text "Done" >& /dev/null &
+pid=$!
+sleep 2
+kill -9 $pid >& /dev/null
+
+rmdir $workdir >& /dev/null
+
+exit 0
+
