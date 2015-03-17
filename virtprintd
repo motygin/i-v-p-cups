@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# File : virtprintd
+# Version: 0.2.7 (10/02/09)
+# Function: a daemon that provides interface of cups backend (ps-vprinter) to interactive
+# printer spooler and virtual printers - gtklp, printkit_pdf, printkit_djvu, printkit_ps
+#
+# When printing through printkit_* it is possible:
+# to save output as a djvu, pdf or ps file
+#
+# Starting daemon: exec virtprintd start &
+# Exiting : virtprintd stop
+#
+# Copyright (C) 2009 Oleg Motygin <o.v.motygin at gmail dot com>
+#
+
+# The daemon waits till cups backend (ps-vprinter) creates the directory
+
+VIRTDIR="/dev/shm/$USER-virtprint"
+
+# (it is assumed that /dev/shm is tmpfs, located in RAM)
+
+# then it takes name of a PS file prepared by the cups backend from the file
+sPS="ps-done"
+# or
+sPDF="pdf-done"
+# or
+sDJVU="djvu-done"
+# or
+sPRINTER="printer-done"
+# and process the ps file to corresponding print tool: printkit_ps, _pdf, _djvu, or to gtklp
+
+PIDFILE="/dev/shm/$USER-virtprintd.pid"
+
+fCOPIES="copies"
+fPRINTER="printer"
+
+start_printkit_ps()
+{
+  if [ -f "$VIRTDIR/$sPS" ]; then
+   PSFILE=`cat "$VIRTDIR/$sPS"`
+   rm -f "$VIRTDIR/$sPS"
+   (printkit_ps < "$PSFILE" ; rm -f "$PSFILE" > /dev/null) &
+  fi
+}
+
+start_printkit_pdf()
+{
+  if [ -f "$VIRTDIR/$sPDF" ]; then
+   PSFILE=`cat "$VIRTDIR/$sPDF"`
+   rm -f "$VIRTDIR/$sPDF"
+   (printkit_pdf < "$PSFILE" ; rm -f "$PSFILE" > /dev/null) &
+  fi
+}
+
+start_printkit_djvu()
+{
+  if [ -f "$VIRTDIR/$sDJVU" ]; then
+   PSFILE=`cat "$VIRTDIR/$sDJVU"`
+   rm -f "$VIRTDIR/$sDJVU"
+   (printkit_djvu < "$PSFILE" ; rm -f "$PSFILE" > /dev/null) &
+  fi
+}
+
+start_printer()
+{
+  if [ -f "$VIRTDIR/$sPRINTER" ]; then
+   PSFILE=`cat "$VIRTDIR/$sPRINTER"`
+   COPIES=`cat "$VIRTDIR/$fCOPIES"`
+   PRINTER=`cat "$VIRTDIR/$fPRINTER"`
+   rm -f "$VIRTDIR/$sPRINTER"
+   rm -f "$VIRTDIR/$fCOPIES"
+   rm -f "$VIRTDIR/$fPRINTER"
+   (gtklp -n "$COPIES" -P "$PRINTER" < "$PSFILE" ; rm -f "$PSFILE" > /dev/null) &
+  fi
+}
+
+case $1 in
+start)
+ exec 0>&- # close stdin
+ $0 run >& /dev/null &
+ exit 0
+;;
+run) if [ -f "$PIDFILE" ]; then
+   kill -9 `cat "$PIDFILE"`
+ fi
+ pid=$$
+ echo $pid > "$PIDFILE"
+ while :
+ do
+  if [ -d "$VIRTDIR" ]; then
+   start_printkit_ps
+   start_printkit_pdf
+   start_printkit_djvu
+   start_printer
+   rm -f "$VIRTDIR/$fCOPIES"
+   rm -f "$VIRTDIR/$fPRINTER"
+   rmdir "$VIRTDIR"
+  fi
+  sleep 1s
+ done
+;;
+stop) if [ -f "$PIDFILE" ]; then
+   kill -9 `cat "$PIDFILE"`
+ fi
+ rm -f "$PIDFILE" >& /dev/null
+ rmdir "$VIRTDIR" >& /dev/null
+ exit
+;;
+esac
+
+exit
