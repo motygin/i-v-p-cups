@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# File : printkit_ps
+# Version: 0.2.3 (11/02/09)
+# Function: interactive ps print filter
+#
+# When printing through printkit_ps it is possible to save output as a ps file
+# the script asks user for file name for saving.
+#
+# Usage: printkit_ps <name of postscript file>
+# or 
+# printkit_ps
+# (then it takes the postscript file from stdin)
+#
+# Used packages: zenity
+#
+# Copyright (C) 2009 Oleg Motygin <o dot v dot motygin at gmail dot com>
+#
+
+# type of notification dialogs
+msgboxtype="notification"
+#msgboxtype="info"
+
+# height of list windows
+height=220
+
+if [[ -z $( type -p zenity ) ]]; then echo -e "Zenity -- NOT INSTALLED !"; exit 2; fi
+
+workdir="/tmp/temp_printkit_`date +%d%H%M%S`"
+mkdir $workdir >& /dev/null
+nmf="$workdir/page"
+
+if [ $# -lt 1 ]; then
+ cat /dev/stdin > $nmf.ps
+else
+ if [ -f "$1" ]; then
+  cp "$1" "$nmf.ps"
+ else
+  cat /dev/stdin > "$nmf.ps"
+ fi
+fi
+
+cont=1
+while [ $cont -eq 1 ]
+do
+ cont=0
+ fnm=`zenity --title="Save PS file as" --file-selection --save`
+ exitcode=$?
+ if [ $exitcode -ne 0 -o "$fnm" = "" ]; then
+  rm -f $pagelist >& /dev/null
+  rm -f "$nmf".ps >& /dev/null
+  rmdir $workdir >& /dev/null
+  zenity --$msgboxtype --text "Interrupted by user" >& /dev/null &
+  pid=$!
+  sleep 3
+  kill -9 $pid >& /dev/null
+  exit 127
+ fi
+ if [ -f "$fnm" ]; then
+  ch=`zenity --height $height --title "warning" --text "The file already exists." \
+  --list --column "--- How to proceed ? ---" "Overwrite" "Change name"`
+   exitcode=$?
+   if [ $exitcode -ne 0 -o "$ch" = "" ]; then
+    rm -f $pagelist >& /dev/null
+    rm -f "$nmf".ps >& /dev/null
+    rmdir $workdir >& /dev/null
+    zenity --$msgboxtype --text "Interrupted by user"  >& /dev/null &
+    pid=$!
+    sleep 3
+    kill -9 $pid >& /dev/null
+    exit 127
+   fi
+   if [ "$ch" = "Change name" ]; then
+   cont=1
+   fi
+ fi
+done
+
+mv -f "$nmf".ps "$fnm" >& /dev/null
+
+rmdir $workdir >& /dev/null
+
+exit 0
