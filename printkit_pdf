@@ -1,0 +1,154 @@
+#!/bin/bash
+#
+# File : printkit_pdf
+# Version: 0.2.2 (11/01/09)
+# Function: interactive pdf print filter 
+#
+# When printing through printkit_pdf it is possible to save output as a pdf file
+# the script asks user for file name for saving. When choosing an existing file 
+# for saving, it is possible to add converted material to the file
+#
+# Usage: printkit_pdf <name of postscript file>
+# or 
+# printkit_pdf
+# (then it takes the postscript file from stdin)
+#
+# If  cleanuptype3fonts is set to "yes" the pdf pseudoprinter also tries to get rid of type3 raster 
+# fonts that may make the output pdf file to look better. This function needs perl installed.
+
+cleanuptype3fonts="yes"
+
+#
+# Used packages: zenity; pdftk
+#
+# Copyright (C) 2009 Oleg Motygin <o dot v dot motygin at gmail dot com>
+#
+
+# Quality of pdf output
+# Low-resolution
+#quality="/screen"
+# Medium-resolution
+#quality="/ebook"
+# High-resolution
+#quality="/printer"
+# Best
+
+quality="/prepress"
+
+# type of notification dialogs
+msgboxtype="notification"
+#msgboxtype="info"
+
+# height of list windows
+height=220
+
+if [[ -z $( type -p zenity ) ]]; then echo -e "Zenity -- NOT INSTALLED !";exit 2 ;fi
+
+if [[ -z $( type -p pdftk ) ]]; then zenity --info --text "Pdftk -- NOT INSTALLED !"; rm -f "$nmf".ps; rmdir $workdir; exit 6 ;fi
+
+workdir="/tmp/temp_printkit_`date +%d%H%M%S`"
+mkdir $workdir >& /dev/null
+nmf="$workdir/page"
+
+if [ $# -lt 1 ]; then
+ cat /dev/stdin > $nmf.ps
+else
+ if [ -f "$1" ]; then
+  cat $1 > $nmf.ps
+ else
+  cat /dev/stdin > $nmf.ps
+ fi
+fi
+
+if [ "$cleanuptype3fonts" = "yes" ]; then
+if [[ -z $( type -p perl ) ]]; then
+  cat "$nmf".ps | perl -e '$/="%%BeginFont"; $s=""; while (<>) { s#:.*?\n/FontName\s*?(\S*)\s*?def[^%]*/FontType\s*?3\s*?def.*?\nFontName\s*?currentdict\s*?end\s*?definefont\s*?pop#<<<<>>>>$1 findfont#gs; $s=$s.$_;}$s=~s#%%BeginFont<<<<>>>>##gs; print $s;' > "$nmf"2.ps
+ mv -f "$nmf"2.ps "$nmf".ps >& /dev/null
+fi
+fi
+
+fnmc="$workdir/pdf1.pdf"
+fnmt="$workdir/pdf2.pdf"
+fnmtt="$workdir/pdf3.pdf"
+
+zenity --$msgboxtype --text "Conversion to PDF goes on" >& /dev/null &
+pid=$!
+ps2pdf -dPDFSETTINGS=$quality "$nmf".ps $fnmt 2> /dev/null
+exitcode=$?
+kill -9 $pid >& /dev/null
+if [ $exitcode -ne 0 ]; then
+  zenity --info --text "Conversion to pdf failed" >& /dev/null
+  rm -f "$nmf".ps >& /dev/null
+  rm -f $fnmt >& /dev/null
+  rmdir $workdir >& /dev/null
+  exit 10
+fi
+
+cont=1
+while [ $cont -eq 1 ]
+do
+ cont=0
+ fnm=`zenity --title="Save PDF file as" --file-selection --save` >& /dev/null
+ exitcode=$?
+ if [ $exitcode -ne 0 -o "$fnm" = "" ]; then
+  rm -f $pagelist >& /dev/null
+  rm -f "$nmf.ps" >& /dev/null
+  rm -f "$fnmt" >& /dev/null
+  rmdir $workdir >& /dev/null
+  zenity --$msgboxtype --text "Interrupted by user" >& /dev/null &
+  pid=$!
+  sleep 3
+  kill -9 $pid >& /dev/null
+  exit 127
+ fi
+ if [ -f "$fnm" ]; then
+  ch=`zenity --height $height --title "warning" --text "The file already exists." \
+  --list --column "--- How to proceed ? ---" "Insert at the beginning" \
+  "Append to the end" "Overwrite" "Change name"`
+   exitcode=$?
+   if [ $exitcode -ne 0 -o "$ch" = "" ]; then
+    rm -f $pagelist >& /dev/null
+    rm -f "$nmf".ps >& /dev/null
+    rm -f $fnmt >& /dev/null
+    rmdir $workdir >& /dev/null
+    zenity --$msgboxtype --text "Interrupted by user" >& /dev/null &
+    pid=$!
+    sleep 3
+    kill -9 $pid >& /dev/null
+    exit 127
+   fi
+   if [ "$ch" = "Change name" ]; then
+   cont=1
+  fi
+fi
+done
+
+case $ch in
+ "Insert at the beginning") mv -f "$fnm" $fnmc
+   pdftk A=$fnmt B=$fnmc cat A1-end B1-end output $fnmtt 2> /dev/null
+   rm -f $fnmc >& /dev/null
+   rm -f $fnmt >& /dev/null
+   mv -f $fnmtt "$fnm" >& /dev/null
+ ;;
+ "Append to the end") mv -f "$fnm" $fnmc
+   pdftk A=$fnmt B=$fnmc cat B1-end A1-end output $fnmtt 2> /dev/null
+   rm -f $fnmc >& /dev/null
+   rm -f $fnmt >& /dev/null
+   mv -f $fnmtt "$fnm" >& /dev/null
+ ;;
+ *) rm -f "$fnm" >& /dev/null
+   mv -f $fnmt "$fnm" >& /dev/null
+  ;;
+esac
+
+rm -f "$nmf".ps >& /dev/null
+
+zenity --$msgboxtype --text "Done" >& /dev/null &
+pid=$!
+sleep 2
+kill -9 $pid >& /dev/null
+
+rmdir $workdir >& /dev/null
+
+exit 0
+
