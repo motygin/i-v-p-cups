@@ -1,0 +1,110 @@
+# Installation #
+
+**1)** Check if you have the following packages installed:
+`zenity`, `gtklp`, `netpbm` (>=10.21), `psutils`, `djvulibre`, `pdftk`.
+
+**2)** Run as root
+```
+bash ./install.sh <list of devices>
+```
+The list of devices can include `djvu`, `pdf`, `ps` (to install the corresponding virtual printers).
+If it is not `djvu`, `pdf`, `ps`, then the parameter is treated as a printer name (see lpstat -a) and the script adds `gtklp` interface
+with this printer being the default destination for `gtklp`
+
+
+Example (installing `djvu` and `pdf` virtual printers and `gtklp` as CUPS backends; `gtklp` default destination is `Xerox_3250` -
+assuming that this printer has been installed in CUPS):
+```
+bash ./install.sh djvu pdf Xerox_3250
+```
+
+Now any print dialog should have printers
+`Save_as_DJVU`, `Save_as_PDF`, `Xerox_3250_via_gtklp`
+
+**3)** For functioning of the backends the daemon script `virtprintd` should be running
+(with the rights of user!). (More details on algorithm are given below.)
+
+A simple way to have the daemon running is to add
+```
+virtprintd start &
+```
+to autostart of your DE (kde, xfce,...)
+
+Note that when printing through printkit\_pdf, printkit\_djvu it is possible to add files to existing ones.
+
+If something goes wrong see details below.
+
+# Manual installation #
+
+For providing CUPS _ps-vprinter_ backend one has to add as root the script `ps-vprinter` to `/usr/lib/cups/backend` directory and change permissions:
+```
+chmod 755 /usr/lib/cups/backend/ps-vprinter
+```
+or
+```
+chmod 700 /usr/lib/cups/backend/ps-vprinter
+```
+(on some systems it should be `chmod 1755 …` (or `chmod 1700 …`), see also `stat --format=%a /usr/lib/cups/backend/lpd`)
+
+Besides, add the script `virtprintd` to some directory in the `PATH`, for example to `/usr/local/bin` and
+```
+chmod +x /usr/local/bin/virtprintd
+```
+
+If you are going to use virtual printers to print (save) to _djvu_, _pdf_ or _ps_ files, then add the scripts `printkit_djvu`, `printkit_pdf`, `printkit_ps` to some directory in the `PATH`, for example to `/usr/local/bin` and
+```
+chmod +x printkit_djvu
+chmod +x printkit_pdf
+chmod +x printkit_ps
+```
+
+It is highly recommended to install the program `gtklp`. Being installed as CUPS backend through the virtual printer, it gives a uniform approach to your printer from all applications.
+
+For creation of output file _ps-vprinter_ needs a general postscript PPD file (it is better if it supports colour output). The standard `/usr/share/cups/model/Postscript-level2.ppd` can be used if it exists. If no, or for better result it can be useful to add to `/usr/share/cups/model` the PPD file from _cups-pdf_ (further `CUPS-PDF.ppd`) or the free AdobeTM Distiller ppd file from
+http://download.adobe.com/pub/adobe/printerdrivers/win/all/ppdfiles/adobe.zip
+
+## Setting the CUPS printers ##
+
+It can be done through the Web interface http://localhost:631/admin or a command-line program called `lpadmin`:
+
+To add the CUPS PDF virtual printer using `CUPS-PDF.ppd` do as root
+```
+lpadmin -p Save_as_PDF -v ps-vprinter:/pdf -E \
+-P /usr/share/cups/model/CUPS-PDF.ppd -D "Print to a PDF file" \
+-L "Interactive PDF Backend via /usr/lib/cups/backend/ps-vprinter"
+```
+
+To add the CUPS PS virtual printer using `CUPS-PDF.ppd` do as root
+```
+lpadmin -p Save_as_PS -v ps-vprinter:/ps -E \
+-P /usr/share/cups/model/CUPS-PDF.ppd -D "Print to a PS file" \
+-L "Interactive PS Backend via /usr/lib/cups/backend/ps-vprinter"
+```
+
+To add the CUPS DJVU virtual printer using `CUPS-PDF.ppd` do as root
+```
+lpadmin -p Save_as_DJVU -v ps-vprinter:/djvu -E \
+-P /usr/share/cups/model/CUPS-PDF.ppd -D "Print to a DJVU file" \
+-L "Interactive DJVU Backend via /usr/lib/cups/backend/ps-vprinter"
+```
+
+To add `gtklp` as the CUPS printer using `CUPS-PDF.ppd` do as root
+```
+lpadmin -p <NameOfYourPrinter>_via_gtklp -v "ps-vprinter:/printer-><NameOfYourPrinter>" \
+-E -P /usr/share/cups/model/CUPS-PDF.ppd \
+-D "Print to <NameOfYourPrinter> via gtklp" \
+-L "Print to printer <NameOfYourPrinter> via gtklp"
+```
+
+Here `<NameOfYourPrinter>` is the name of your printer device (e.g. Xerox\_3250) in CUPS (see `lpstat -a`)
+
+# Algorithm #
+The daemon _virtprintd_ waits till cups backend _ps-vprinter_ creates the directory `/dev/shm/$USER-virtprint`. Then it takes name of a PS file prepared by the cups backend from the file `ps-done` or `pdf-done` or `djvu-done` or `printer-done` and process the ps file to corresponding print tool: `printkit_ps`, `printkit_pdf`, `printkit_djvu`, or to `gtklp`. (In latter case the file `copies` contains the number of copies, the file `printer` contains the name of printer for gtklp dialogue.)
+
+# Details #
+
+The project language is Bash shell scripts. Needed software: `zenity`; `netpbm` (>=10.21), `psutils`, and `djvulibre` for djvu pseudo-printer; `pdftk` for pdf pseudo-printer.
+
+Semaphore files which are used for inter-process interaction are kept in `tmpfs` (filesystem in RAM); it is assumed that `/dev/shm` is assigned as `tmpfs`.
+
+`/tmp/$USER-ps-files` is the place where the temporary postscript file is kept.
